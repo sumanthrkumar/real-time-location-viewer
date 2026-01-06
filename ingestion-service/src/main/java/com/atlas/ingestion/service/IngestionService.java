@@ -10,6 +10,8 @@ public class IngestionService {
 
     private static final Logger logger = LoggerFactory.getLogger(IngestionService.class);
 
-    public void ingestionLocation
+    public void processLocation(LocationUpdateDto location) {
+        logger.info("Received {}, at {}, {}", location.deviceId(), location.latitude(), location.longitude());
+    }
 
 }

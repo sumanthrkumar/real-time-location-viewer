@@ -2,7 +2,7 @@ package com.atlas.ingestion.dto;
 
 import java.time.Instant;
 
-public record LocationUpdate(
+public record LocationUpdateDto(
     String deviceId,
     double latitude,
     double longitude,
