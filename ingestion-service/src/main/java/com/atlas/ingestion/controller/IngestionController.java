@@ -11,10 +11,9 @@ public class IngestionController {
 
     private final IngestionService ingestionService;
 
-    public IngestionController(IngestionService injectionService) {
+    public IngestionController(IngestionService ingestionService) {
         this.ingestionService = ingestionService;
     }
-
 
     @PostMapping
     public ResponseEntity<Void> updateLocation(@RequestBody LocationUpdateDto locationDto) {
