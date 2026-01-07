@@ -23,6 +23,8 @@ public class RedisConfig {
         JacksonJsonRedisSerializer<LocationUpdateDto> serializer = new JacksonJsonRedisSerializer<>(
                 LocationUpdateDto.class);
         template.setValueSerializer(serializer);
+        template.setConnectionFactory(connectionFactory);
+        template.afterPropertiesSet();
 
         return template;
     }

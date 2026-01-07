@@ -6,5 +6,6 @@ public record LocationUpdateDto(
                 String deviceId,
                 double latitude,
                 double longitude,
-                Instant timestamp) {
+                Instant timestamp,
+                double totalDistance) {
 }
