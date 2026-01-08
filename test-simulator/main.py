@@ -9,10 +9,10 @@ import concurrent.futures
 
 
 # URL Set in docker, but default to localhost
-URL = os.getenv("TARGET_URL", "http://localhost:8080/api/locations")
+URL = os.getenv("TARGET_URL", "http://ingestion-service-0:8080/api/locations")
 
 # Simulate with 10 devices for now
-NUM_DEVICES = 10
+NUM_DEVICES = 1000
 
 # Manual delay between posting events for testing 
 DELAY = 1.0 
@@ -61,7 +61,7 @@ def run_load_test():
         futures = []
 
         for _ in range(NUM_DEVICES):
-            city = random.choice(CITIES)
+            city = {"name": "Seattle", "lat": 47.6062, "lon": -122.3321}
 
             # Create thread for random city to simulate random location updates
             future = executor.submit(

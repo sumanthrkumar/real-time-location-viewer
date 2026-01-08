@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+       <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Real-Time Fleet Tracker</title>
+
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+        <style>
+            body, html {
+                margin: 0;
+                padding: 0;
+                height: 100%;
+            }
+            #map {
+                height: 100vh; /* Full viewport height */
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div id="map"></div>
+
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+        <script>
+            // Initialize the leaflet map set view to Seattle - zoom level of 13
+            const map = L.map('map', {preferCanvas: true}).setView([47.6062, -122.3321], 13);
+
+            // 2. Add a tile layer from OpenStreetMap
+            // We provide the URL template and a 'maxZoom' limit
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            const markers = {};
+            const paths = {};
+
+            function updateMap(data) {
+                const { deviceId, latitude, longitude, totalDistance } = data;
+                
+                if (markers[deviceId] && paths[deviceId]) {
+                    markers[deviceId].setLatLng([latitude, longitude]);
+
+                    paths[deviceId].addLatLng([latitude, longitude]);
+
+                    const latlngs = paths[deviceId].getLatLngs();
+                    if (latlngs.length > 50) {
+                        latlngs.shift(); // Remove oldest point
+                        paths[deviceId].setLatLngs(latlngs);
+                    }
+
+                    if (markers[deviceId].isPopupOpen()) {
+                        markers[deviceId].getPopup().setContent(
+                            `<b>ID:</b> ${deviceId}<br>` +
+                            `<b>Total Distance:</b> ${totalDistance.toFixed(2)} km`
+                        );
+                    }
+
+                } else {
+                    const newMarker = L.marker([latitude, longitude]).addTo(map);
+                    newMarker.bindPopup(`<b>ID:</b> ${deviceId}`, {
+                        autoPan: false,
+                        closeButton: false
+                    });
+                    markers[deviceId] = newMarker;
+
+                    const newPath = L.polyline([[latitude, longitude]], {
+                        color: 'blue',
+                        weight: 3,
+                        opacity: 0.5
+                    }).addTo(map);
+                    
+                    paths[deviceId] = newPath;
+                }
+
+            }
+
+            // Point SockJS to your websocket
+            const socket = new SockJS('/ws'); 
+            const stompClient = Stomp.over(socket);
+
+            // Open connection
+            stompClient.connect({}, function (frame) {
+
+                // On location update from Kafka/Java - following function runs
+                stompClient.subscribe('/topic/location-updates', function (message) {
+                    const locationData = JSON.parse(message.body);
+                    
+                    // Update map with new locationData
+                    updateMap(locationData);
+                });
+            });
+        </script>
+
+    </body>
+
+</html>

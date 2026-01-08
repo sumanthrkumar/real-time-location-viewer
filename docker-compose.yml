@@ -30,6 +30,17 @@ services:
     ports:
       - "6379:6379"
 
+  # Analytics Service (Java)
+  analytics-service:
+    build: ./analytics-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_DATA_REDIS_HOST: redis
+    depends_on:
+      - kafka
+      - redis
 
   # Ingestion Service (Java)
   ingestion-service:
@@ -46,13 +57,20 @@ services:
     depends_on:
       - kafka
       - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Test Simulator (Python)
   test-simulator:
     build: 
       context: ./test-simulator
       dockerfile: Dockerfile
+    depends_on:
+      ingestion-service:
+        condition: service_healthy
     environment:
       TARGET_URL: http://ingestion-service:8080/api/locations
-    depends_on:
-      - ingestion-service
+    
